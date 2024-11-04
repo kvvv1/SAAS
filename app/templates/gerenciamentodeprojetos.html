@@ -5,45 +5,26 @@
 {% block content %}
 <h1 class="text-center text-neon mt-5">Gerenciamento de Projetos</h1>
 <div class="board-container" id="boardContainer">
-    <!-- Colunas de exemplo não interativas -->
-    <div class="column example-column" data-column-id="example1" style="opacity: 0.5; background-color: #b0b0b0;">
-        <div class="column-header">
-            To Do
-            <div class="menu-icon" onclick="toggleMenu(this)">
-                &#x22EE; <!-- Ícone de três pontos verticais -->
-            </div>
-            <div class="menu-options">
-                <div class="color-options">
-                    <button class="color-btn" style="background-color: #FF5733;" onclick="setColor(this)"></button>
-                    <button class="color-btn" style="background-color: #33FF57;" onclick="setColor(this)"></button>
-                    <button class="color-btn" style="background-color: #3357FF;" onclick="setColor(this)"></button>
-                    <button class="color-btn" style="background-color: #FF33A6;" onclick="setColor(this)"></button>
-                    <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
-                </div>
-                <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
-                <div class="submenu">
-                    <button class="submenu-btn">Ordenar por</button>
-                    <div class="submenu-options">
-                        <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
-                        <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
-                        <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="task-list"></div>
-        <button class="add-task-btn" onclick="showTaskInput(this)"><i class="fas fa-plus"></i></button>
-    </div>
-    <!-- Mais colunas de exemplo podem ser adicionadas aqui -->
+    <!-- O conteúdo das colunas será renderizado aqui -->
 </div>
-<button class="btn btn-neon mt-4" onclick="createColumn()">Criar Coluna</button>
+
+<div class="create-column-container">
+    <button class="create-column-btn" onclick="toggleColumnInput()"><i class="fas fa-plus"></i></button>
+    <div class="column-input-wrapper">
+        <input type="text" id="columnNameInput" placeholder="Digite o nome da nova coluna">
+        <button class="confirm-column-btn" onclick="createColumn()"><i class="fas fa-check"></i></button>
+    </div>
+</div>
 
 <script>
-    function createColumn() {
-        const exampleColumns = document.querySelectorAll('.example-column');
-        exampleColumns.forEach(column => column.style.display = 'none');
+    function toggleColumnInput() {
+        const inputWrapper = document.querySelector('.column-input-wrapper');
+        inputWrapper.style.display = inputWrapper.style.display === 'flex' ? 'none' : 'flex';
+    }
 
-        const columnName = prompt('Digite o nome da nova coluna:');
+    function createColumn() {
+        const input = document.getElementById('columnNameInput');
+        const columnName = input.value.trim();
         if (columnName) {
             const boardContainer = document.getElementById('boardContainer');
 
@@ -81,13 +62,14 @@
             `;
 
             boardContainer.appendChild(newColumn);
+            input.value = ''; // Limpa o input após criar a coluna
+            document.querySelector('.column-input-wrapper').style.display = 'none'; // Oculta o input após criar a coluna
         }
     }
 
     function showTaskInput(button) {
         const taskList = button.previousElementSibling;
 
-        // Verifica se já existe uma entrada de tarefa ativa
         if (taskList.querySelector('.task-input')) {
             return; // Evita múltiplos campos de entrada
         }
@@ -127,7 +109,6 @@
         taskList.appendChild(inputContainer);
         input.focus(); // Foca no input para começar a digitar imediatamente
 
-        // Altera o botão para um estado inativo enquanto a tarefa está sendo criada
         button.innerHTML = ''; // Remover conteúdo do botão de "+"
     }
 
@@ -136,19 +117,14 @@
         if (menu.style.display === 'block') {
             menu.style.display = 'none';
         } else {
-            // Fecha todos os outros menus abertos
             document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none');
-
-            // Exibe o menu clicado
             menu.style.display = 'block';
             menu.style.position = 'fixed';
 
-            // Posiciona o menu ao lado da coluna
             const rect = icon.closest('.column').getBoundingClientRect();
             menu.style.left = `${rect.right + 10}px`;
             menu.style.top = `${rect.top}px`;
 
-            // Ajusta o menu se ultrapassar a largura da janela
             if (menu.getBoundingClientRect().right > window.innerWidth) {
                 menu.style.left = `${rect.left - menu.offsetWidth - 10}px`;
             }
@@ -183,7 +159,6 @@
 
         tasks.forEach(task => taskList.appendChild(task));
 
-        // Atualiza a marcação de opção ativa
         button.parentElement.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
         button.classList.add('active');
     }
@@ -197,7 +172,7 @@
         gap: 20px;
     }
     .column {
-        background-color: #b0b0b0; /* Cor padrão cinza */
+        background-color: #b0b0b0;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         width: 300px;
@@ -258,6 +233,23 @@
     .menu-options i {
         margin-right: 5px;
     }
+    .submenu-options {
+        display: none;
+        position: absolute;
+        left: 100%;
+        top: 0;
+        background-color: #333;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 15;
+        padding: 5px;
+    }
+    .submenu:hover .submenu-options {
+        display: block;
+    }
+    .submenu-options button {
+        padding: 5px 10px;
+    }
     .task-list {
         margin-top: 10px;
     }
@@ -287,7 +279,6 @@
         background: none;
         border: none;
         cursor: pointer;
-        margin-top: auto; /* Posiciona o botão no lado inferior esquerdo */
         padding: 5px;
         font-size: 1.5em;
         color: #333;
@@ -305,6 +296,49 @@
     }
     .confirm-task-btn i {
         font-size: 1em;
+    }
+    .create-column-container {
+        display: flex;
+        align-items: center;
+        position: relative;
+        margin-top: 20px;
+    }
+    .create-column-btn {
+        background-color: #39ff14;
+        border: none;
+        border-radius: 50%;
+        padding: 15px;
+        cursor: pointer;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    .create-column-btn:hover {
+        background-color: #32cd12;
+    }
+    .column-input-wrapper {
+        display: none;
+        flex-direction: row;
+        align-items: center;
+        margin-left: 10px;
+    }
+    .column-input-wrapper input {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        margin-right: 5px;
+        outline: none;
+    }
+    .confirm-column-btn {
+        background-color: #39ff14;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        font-size: 1em;
+        color: #000;
     }
 </style>
 
