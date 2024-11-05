@@ -9,61 +9,94 @@
 </div>
 
 <div class="create-column-container">
-    <button class="create-column-btn" onclick="toggleColumnInput()"><i class="fas fa-plus"></i></button>
-    <div class="column-input-wrapper">
-        <input type="text" id="columnNameInput" placeholder="Digite o nome da nova coluna">
-        <button class="confirm-column-btn" onclick="createColumn()"><i class="fas fa-check"></i></button>
-    </div>
+    <button class="create-column-btn" onclick="createTemporaryColumn()"><i class="fas fa-plus"></i></button>
 </div>
 
 <script>
-    function toggleColumnInput() {
-        const inputWrapper = document.querySelector('.column-input-wrapper');
-        inputWrapper.style.display = inputWrapper.style.display === 'flex' ? 'none' : 'flex';
-    }
+    let isCreatingColumn = false; // Variável de controle para evitar múltiplas criações simultâneas
 
-    function createColumn() {
-        const input = document.getElementById('columnNameInput');
-        const columnName = input.value.trim();
-        if (columnName) {
-            const boardContainer = document.getElementById('boardContainer');
+    function createTemporaryColumn() {
+        if (isCreatingColumn) return; // Impede criar outra coluna sem nomear a atual
 
-            const newColumn = document.createElement('div');
-            newColumn.classList.add('column');
-            newColumn.setAttribute('data-column-id', `column-${Date.now()}`);
-            newColumn.style.backgroundColor = '#b0b0b0'; // Define a cor padrão cinza
-            newColumn.innerHTML = `
-                <div class="column-header">
-                    ${columnName}
-                    <div class="menu-icon" onclick="toggleMenu(this)">
-                        &#x22EE;
+        const boardContainer = document.getElementById('boardContainer');
+
+        // Criação da nova coluna com a caixa de entrada de texto
+        const newColumn = document.createElement('div');
+        newColumn.classList.add('column');
+        newColumn.style.backgroundColor = '#b0b0b0'; // Cor padrão cinza
+        newColumn.innerHTML = `
+            <div class="column-header">
+                <input type="text" class="column-name-input" placeholder="Digite o nome da nova coluna" onkeypress="checkEnterKey(event, this)">
+                <button class="confirm-column-btn" onclick="confirmColumn(this)"><i class="fas fa-check"></i></button>
+                <div class="menu-icon" onclick="toggleMenu(this)">
+                    &#x22EE;
+                </div>
+                <div class="menu-options">
+                    <div class="color-options">
+                        <button class="color-btn" style="background-color: #FF5733;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #33FF57;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #3357FF;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #FF33A6;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
                     </div>
-                    <div class="menu-options">
-                        <div class="color-options">
-                            <button class="color-btn" style="background-color: #FF5733;" onclick="setColor(this)"></button>
-                            <button class="color-btn" style="background-color: #33FF57;" onclick="setColor(this)"></button>
-                            <button class="color-btn" style="background-color: #3357FF;" onclick="setColor(this)"></button>
-                            <button class="color-btn" style="background-color: #FF33A6;" onclick="setColor(this)"></button>
-                            <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
-                        </div>
-                        <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
-                        <div class="submenu">
-                            <button class="submenu-btn">Ordenar por</button>
-                            <div class="submenu-options">
-                                <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
-                                <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
-                                <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
-                            </div>
+                    <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
+                    <div class="submenu">
+                        <button class="submenu-btn">Ordenar por</button>
+                        <div class="submenu-options">
+                            <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
+                            <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
+                            <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
                         </div>
                     </div>
                 </div>
-                <div class="task-list"></div>
-                <button class="add-task-btn" onclick="showTaskInput(this)"><i class="fas fa-plus"></i></button>
-            `;
+            </div>
+            <div class="task-list"></div>
+            <button class="add-task-btn" onclick="showTaskInput(this)"><i class="fas fa-plus"></i></button>
+        `;
 
-            boardContainer.appendChild(newColumn);
-            input.value = ''; // Limpa o input após criar a coluna
-            document.querySelector('.column-input-wrapper').style.display = 'none'; // Oculta o input após criar a coluna
+        boardContainer.appendChild(newColumn);
+        newColumn.querySelector('.column-name-input').focus(); // Focar no input
+
+        isCreatingColumn = true; // Define que uma coluna está em criação
+    }
+
+    function confirmColumn(button) {
+        const columnHeader = button.closest('.column-header');
+        const input = columnHeader.querySelector('.column-name-input');
+        const columnName = input.value.trim();
+
+        if (columnName) {
+            columnHeader.innerHTML = `
+                ${columnName}
+                <div class="menu-icon" onclick="toggleMenu(this)">
+                    &#x22EE;
+                </div>
+                <div class="menu-options">
+                    <div class="color-options">
+                        <button class="color-btn" style="background-color: #FF5733;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #33FF57;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #3357FF;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #FF33A6;" onclick="setColor(this)"></button>
+                        <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
+                    </div>
+                    <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
+                    <div class="submenu">
+                        <button class="submenu-btn">Ordenar por</button>
+                        <div class="submenu-options">
+                            <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
+                            <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
+                            <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            isCreatingColumn = false; // Libera a criação de outra coluna
+        }
+    }
+
+    function checkEnterKey(event, input) {
+        if (event.key === 'Enter') {
+            confirmColumn(input.nextElementSibling);
         }
     }
 
@@ -84,7 +117,7 @@
 
         const confirmButton = document.createElement('button');
         confirmButton.classList.add('confirm-task-btn');
-        confirmButton.innerHTML = '<i class="fas fa-check"></i>'; // Ícone de confirmação
+        confirmButton.innerHTML = '<i class="fas fa-check"></i>';
 
         confirmButton.onclick = function () {
             if (input.value.trim() !== '') {
@@ -93,43 +126,45 @@
                 task.textContent = input.value.trim();
                 task.dataset.timestamp = Date.now();
                 taskList.appendChild(task);
-                inputContainer.remove(); // Remove o campo de entrada após confirmar a tarefa
-                button.innerHTML = '<i class="fas fa-plus"></i>'; // Retorna o botão de adicionar tarefa ao símbolo de "+"
+                inputContainer.remove();
+                button.innerHTML = '<i class="fas fa-plus"></i>';
             }
         };
 
         input.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && input.value.trim() !== '') {
-                confirmButton.click(); // Simula o clique no botão de confirmação ao pressionar "Enter"
+                confirmButton.click();
             }
         });
 
         inputContainer.appendChild(input);
         inputContainer.appendChild(confirmButton);
         taskList.appendChild(inputContainer);
-        input.focus(); // Foca no input para começar a digitar imediatamente
-
-        button.innerHTML = ''; // Remover conteúdo do botão de "+"
+        input.focus();
+        button.innerHTML = '';
     }
 
     function toggleMenu(icon) {
-        const menu = icon.nextElementSibling;
-        if (menu.style.display === 'block') {
-            menu.style.display = 'none';
-        } else {
-            document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none');
-            menu.style.display = 'block';
-            menu.style.position = 'fixed';
-
-            const rect = icon.closest('.column').getBoundingClientRect();
-            menu.style.left = `${rect.right + 10}px`;
-            menu.style.top = `${rect.top}px`;
-
-            if (menu.getBoundingClientRect().right > window.innerWidth) {
-                menu.style.left = `${rect.left - menu.offsetWidth - 10}px`;
-            }
-        }
+    const menu = icon.nextElementSibling;
+    if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+    } else {
+        // Fecha qualquer menu aberto anteriormente
+        document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none');
+        
+        menu.style.display = 'block';
+        menu.style.position = 'absolute';
+        
+        // Posição para que o menu apareça alinhado com o botão de menu
+        const rect = icon.getBoundingClientRect();
+        const parentRect = icon.closest('.column').getBoundingClientRect();
+        
+        menu.style.left = `${rect.right - parentRect.left - menu.offsetWidth}px`; // Ajusta para alinhar corretamente
+        menu.style.top = `${rect.top - parentRect.top}px`; // Mantém o menu na mesma altura do botão
     }
+}
+
+
 
     function setColor(button) {
         const column = button.closest('.column');
@@ -181,6 +216,7 @@
         flex-direction: column;
         padding: 15px;
         position: relative;
+        animation: slideIn 0.5s ease-out;
     }
     .column-header {
         font-size: 1.2em;
@@ -191,19 +227,22 @@
     }
     .menu-icon {
         position: absolute;
-        top: 0;
-        right: 0;
+        top: 5px;
+        right: 5px;
         cursor: pointer;
     }
     .menu-options {
-        display: none;
-        background-color: #222;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        z-index: 10;
-        padding: 5px;
-        min-width: 150px;
-    }
+    display: none;
+    background-color: #222;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    padding: 5px;
+    min-width: 150px;
+    position: absolute; /* Certifique-se de que o menu seja posicionado absolutamente */
+}
+
+
     .color-options {
         display: flex;
         justify-content: space-around;
@@ -304,41 +343,30 @@
         margin-top: 20px;
     }
     .create-column-btn {
-        background-color: #39ff14;
+        background: none;
         border: none;
         border-radius: 50%;
         padding: 15px;
         cursor: pointer;
         font-size: 1.5em;
+        color: #39ff14;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s;
     }
     .create-column-btn:hover {
-        background-color: #32cd12;
+        color: #32cd12;
     }
-    .column-input-wrapper {
-        display: none;
-        flex-direction: row;
-        align-items: center;
-        margin-left: 10px;
-    }
-    .column-input-wrapper input {
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        margin-right: 5px;
-        outline: none;
-    }
-    .confirm-column-btn {
-        background-color: #39ff14;
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-        cursor: pointer;
-        font-size: 1em;
-        color: #000;
+    @keyframes slideIn {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
 </style>
 
