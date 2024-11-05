@@ -4,12 +4,13 @@
 
 {% block content %}
 <h1 class="text-center text-neon mt-5">Gerenciamento de Projetos</h1>
-<div class="board-container" id="boardContainer">
-    <!-- O conteúdo das colunas será renderizado aqui -->
-</div>
-
-<div class="create-column-container">
-    <button class="create-column-btn" onclick="createTemporaryColumn()"><i class="fas fa-plus"></i></button>
+<div class="board-wrapper">
+    <div class="create-column-container">
+        <button class="create-column-btn" onclick="createTemporaryColumn()"><i class="fas fa-plus"></i></button>
+    </div>
+    <div class="board-container" id="boardContainer">
+        <!-- O conteúdo das colunas será renderizado aqui -->
+    </div>
 </div>
 
 <script>
@@ -28,34 +29,19 @@
             <div class="column-header">
                 <input type="text" class="column-name-input" placeholder="Digite o nome da nova coluna" onkeypress="checkEnterKey(event, this)">
                 <button class="confirm-column-btn" onclick="confirmColumn(this)"><i class="fas fa-check"></i></button>
-                <div class="menu-icon" onclick="toggleMenu(this)">
-                    &#x22EE;
-                </div>
-                <div class="menu-options">
-                    <div class="color-options">
-                        <button class="color-btn" style="background-color: #FF5733;" onclick="setColor(this)"></button>
-                        <button class="color-btn" style="background-color: #33FF57;" onclick="setColor(this)"></button>
-                        <button class="color-btn" style="background-color: #3357FF;" onclick="setColor(this)"></button>
-                        <button class="color-btn" style="background-color: #FF33A6;" onclick="setColor(this)"></button>
-                        <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
-                    </div>
-                    <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
-                    <div class="submenu">
-                        <button class="submenu-btn">Ordenar por</button>
-                        <div class="submenu-options">
-                            <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
-                            <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
-                            <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="task-list"></div>
-            <button class="add-task-btn" onclick="showTaskInput(this)"><i class="fas fa-plus"></i></button>
+            <button class="add-task-btn" onclick="showTaskInput(this)" style="display: none;"><i class="fas fa-plus"></i></button>
         `;
 
+        // Adiciona a nova coluna ao final do board-container
         boardContainer.appendChild(newColumn);
         newColumn.querySelector('.column-name-input').focus(); // Focar no input
+
+        // Adiciona animação de entrada à coluna
+        requestAnimationFrame(() => {
+            newColumn.classList.add('slide-in');
+        });
 
         isCreatingColumn = true; // Define que uma coluna está em criação
     }
@@ -90,6 +76,11 @@
                     </div>
                 </div>
             `;
+
+            // Exibe o botão de criação de tarefas após a confirmação do nome da coluna
+            const column = columnHeader.closest('.column');
+            column.querySelector('.add-task-btn').style.display = 'block';
+
             isCreatingColumn = false; // Libera a criação de outra coluna
         }
     }
@@ -145,26 +136,14 @@
     }
 
     function toggleMenu(icon) {
-    const menu = icon.nextElementSibling;
-    if (menu.style.display === 'block') {
-        menu.style.display = 'none';
-    } else {
-        // Fecha qualquer menu aberto anteriormente
-        document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none');
-        
-        menu.style.display = 'block';
-        menu.style.position = 'absolute';
-        
-        // Posição para que o menu apareça alinhado com o botão de menu
-        const rect = icon.getBoundingClientRect();
-        const parentRect = icon.closest('.column').getBoundingClientRect();
-        
-        menu.style.left = `${rect.right - parentRect.left - menu.offsetWidth}px`; // Ajusta para alinhar corretamente
-        menu.style.top = `${rect.top - parentRect.top}px`; // Mantém o menu na mesma altura do botão
+        const menu = icon.nextElementSibling;
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+        } else {
+            document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none'); // Fecha menus abertos
+            menu.style.display = 'block';
+        }
     }
-}
-
-
 
     function setColor(button) {
         const column = button.closest('.column');
@@ -200,12 +179,28 @@
 </script>
 
 <style>
+    .board-wrapper {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .create-column-container {
+        flex-shrink: 0;
+        margin-right: 20px;
+        position: sticky;
+        margin-top: 20px;
+        left: 0;
+        top: 20px;
+    }
+
     .board-container {
         display: flex;
+        flex-grow: 1;
         overflow-x: auto;
         padding: 20px;
         gap: 20px;
     }
+
     .column {
         background-color: #b0b0b0;
         border-radius: 8px;
@@ -216,8 +211,16 @@
         flex-direction: column;
         padding: 15px;
         position: relative;
-        animation: slideIn 0.5s ease-out;
+        opacity: 0;
+        transform: translateX(-100%);
+        transition: transform 0.5s ease-out, opacity 0.5s ease-out;
     }
+
+    .slide-in {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
     .column-header {
         font-size: 1.2em;
         font-weight: bold;
@@ -225,29 +228,31 @@
         text-align: center;
         position: relative;
     }
+
     .menu-icon {
         position: absolute;
         top: 5px;
         right: 5px;
         cursor: pointer;
     }
-    .menu-options {
-    display: none;
-    background-color: #222;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 10;
-    padding: 5px;
-    min-width: 150px;
-    position: absolute; /* Certifique-se de que o menu seja posicionado absolutamente */
-}
 
+    .menu-options {
+        display: none;
+        background-color: #222;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        padding: 5px;
+        min-width: 150px;
+        position: absolute;
+    }
 
     .color-options {
         display: flex;
         justify-content: space-around;
         margin-bottom: 10px;
     }
+
     .color-btn {
         width: 20px;
         height: 20px;
@@ -255,6 +260,7 @@
         cursor: pointer;
         border-radius: 3px;
     }
+
     .menu-options button {
         background: none;
         border: none;
@@ -266,46 +272,19 @@
         display: flex;
         align-items: center;
     }
+
     .menu-options button:hover {
         background-color: #333;
     }
+
     .menu-options i {
         margin-right: 5px;
     }
-    .submenu-options {
-        display: none;
-        position: absolute;
-        left: 100%;
-        top: 0;
-        background-color: #333;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        z-index: 15;
-        padding: 5px;
-    }
-    .submenu:hover .submenu-options {
-        display: block;
-    }
-    .submenu-options button {
-        padding: 5px 10px;
-    }
+
     .task-list {
         margin-top: 10px;
     }
-    .task-input-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 5px;
-    }
-    .task-input {
-        flex: 1;
-        padding: 10px;
-        margin-right: 5px;
-        border: none;
-        border-radius: 5px;
-        outline: none;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
+
     .task {
         background-color: #444;
         color: #fff;
@@ -314,6 +293,7 @@
         border-radius: 5px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
+
     .add-task-btn {
         background: none;
         border: none;
@@ -321,10 +301,13 @@
         padding: 5px;
         font-size: 1.5em;
         color: #333;
+        display: none; /* Oculta por padrão */
     }
+
     .add-task-btn:hover {
         color: #39ff14;
     }
+
     .confirm-task-btn {
         background-color: #39ff14;
         border: none;
@@ -333,15 +316,11 @@
         cursor: pointer;
         color: #000;
     }
+
     .confirm-task-btn i {
         font-size: 1em;
     }
-    .create-column-container {
-        display: flex;
-        align-items: center;
-        position: relative;
-        margin-top: 20px;
-    }
+
     .create-column-btn {
         background: none;
         border: none;
@@ -355,18 +334,35 @@
         justify-content: center;
         transition: all 0.3s;
     }
+
     .create-column-btn:hover {
         color: #32cd12;
     }
-    @keyframes slideIn {
-        from {
-            transform: translateX(-100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+
+    .column-name-input {
+        flex: 1;
+        padding: 10px;
+        margin-bottom: 5px;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        font-size: 1em;
+        width: calc(100% - 30px); /* Para ajustar o tamanho interno */
+    }
+
+    .confirm-column-btn {
+        background-color: #39ff14;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        color: #000;
+        margin-left: 5px;
+    }
+
+    .confirm-column-btn i {
+        font-size: 1em;
     }
 </style>
 
