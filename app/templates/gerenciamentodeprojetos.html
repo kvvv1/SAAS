@@ -27,8 +27,10 @@
         newColumn.style.backgroundColor = '#b0b0b0'; // Cor padrão cinza
         newColumn.innerHTML = `
             <div class="column-header">
-                <input type="text" class="column-name-input" placeholder="Digite o nome da nova coluna" onkeypress="checkEnterKey(event, this)">
-                <button class="confirm-column-btn" onclick="confirmColumn(this)"><i class="fas fa-check"></i></button>
+                <div class="input-container">
+                    <input type="text" class="column-name-input" placeholder="Digite o nome da nova coluna" onkeypress="checkEnterKey(event, this)">
+                    <button class="confirm-column-btn" onclick="confirmColumn(this)"><i class="fas fa-check"></i></button>
+                </div>
             </div>
             <div class="task-list"></div>
             <button class="add-task-btn" onclick="showTaskInput(this)" style="display: none;"><i class="fas fa-plus"></i></button>
@@ -202,7 +204,7 @@
     }
 
     .column {
-        background-color: #b0b0b0;
+        background-color: #ffffff29 !important;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         width: 300px;
@@ -227,6 +229,70 @@
         margin-bottom: 10px;
         text-align: center;
         position: relative;
+    }
+    .input-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+    .task-input-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        width: 100%; /* Ajusta a largura para caber dentro da coluna */
+        box-sizing: border-box; /* Inclui padding e border dentro da largura */
+    }
+    .column-name-input {
+    flex: 1; /* Garante que o input ocupe o espaço disponível */
+    padding: 8px; /* Reduz o padding para encaixar melhor */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    font-size: 0.9em; /* Reduz o tamanho do texto */
+    height: 35px;
+}
+    .task-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 1em;
+        height: 40px;
+    }
+
+ .confirm-task-btn {
+        background-color: #39ff14;
+        border: none;
+        border-radius: 5px;
+        padding: 0 15px;
+        cursor: pointer;
+        color: #000;
+        font-size: 1em;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .confirm-column-btn {
+    flex-shrink: 0; /* Evita que o botão encolha */
+    width: 35px; /* Ajusta a largura do botão */
+    height: 35px; /* Ajusta a altura do botão */
+    padding: 0; /* Remove padding extra */
+    background-color: #39ff14;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .confirm-column-btn i, .confirm-task-btn i {
+        font-size: 1em;
     }
 
     .menu-icon {
@@ -308,19 +374,6 @@
         color: #39ff14;
     }
 
-    .confirm-task-btn {
-        background-color: #39ff14;
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-        cursor: pointer;
-        color: #000;
-    }
-
-    .confirm-task-btn i {
-        font-size: 1em;
-    }
-
     .create-column-btn {
         background: none;
         border: none;
@@ -337,32 +390,6 @@
 
     .create-column-btn:hover {
         color: #32cd12;
-    }
-
-    .column-name-input {
-        flex: 1;
-        padding: 10px;
-        margin-bottom: 5px;
-        border: none;
-        border-radius: 5px;
-        outline: none;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        font-size: 1em;
-        width: calc(100% - 30px); /* Para ajustar o tamanho interno */
-    }
-
-    .confirm-column-btn {
-        background-color: #39ff14;
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-        cursor: pointer;
-        color: #000;
-        margin-left: 5px;
-    }
-
-    .confirm-column-btn i {
-        font-size: 1em;
     }
 </style>
 
