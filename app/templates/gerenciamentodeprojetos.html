@@ -14,17 +14,15 @@
 </div>
 
 <script>
-    let isCreatingColumn = false; // Variável de controle para evitar múltiplas criações simultâneas
+    let isCreatingColumn = false;
 
     function createTemporaryColumn() {
-        if (isCreatingColumn) return; // Impede criar outra coluna sem nomear a atual
+        if (isCreatingColumn) return;
 
         const boardContainer = document.getElementById('boardContainer');
-
-        // Criação da nova coluna com a caixa de entrada de texto
         const newColumn = document.createElement('div');
         newColumn.classList.add('column');
-        newColumn.style.backgroundColor = '#b0b0b0'; // Cor padrão cinza
+        newColumn.style.backgroundColor = '#ffffff29';
         newColumn.innerHTML = `
             <div class="column-header">
                 <div class="input-container">
@@ -36,16 +34,12 @@
             <button class="add-task-btn" onclick="showTaskInput(this)" style="display: none;"><i class="fas fa-plus"></i></button>
         `;
 
-        // Adiciona a nova coluna ao final do board-container
         boardContainer.appendChild(newColumn);
-        newColumn.querySelector('.column-name-input').focus(); // Focar no input
-
-        // Adiciona animação de entrada à coluna
+        newColumn.querySelector('.column-name-input').focus();
         requestAnimationFrame(() => {
             newColumn.classList.add('slide-in');
         });
-
-        isCreatingColumn = true; // Define que uma coluna está em criação
+        isCreatingColumn = true;
     }
 
     function confirmColumn(button) {
@@ -78,12 +72,8 @@
                     </div>
                 </div>
             `;
-
-            // Exibe o botão de criação de tarefas após a confirmação do nome da coluna
-            const column = columnHeader.closest('.column');
-            column.querySelector('.add-task-btn').style.display = 'block';
-
-            isCreatingColumn = false; // Libera a criação de outra coluna
+            columnHeader.closest('.column').querySelector('.add-task-btn').style.display = 'block';
+            isCreatingColumn = false;
         }
     }
 
@@ -97,7 +87,7 @@
         const taskList = button.previousElementSibling;
 
         if (taskList.querySelector('.task-input')) {
-            return; // Evita múltiplos campos de entrada
+            return;
         }
 
         const inputContainer = document.createElement('div');
@@ -116,7 +106,33 @@
             if (input.value.trim() !== '') {
                 const task = document.createElement('div');
                 task.classList.add('task');
-                task.textContent = input.value.trim();
+
+                // Formatação da data e hora simplificada
+                const createdAt = new Date();
+                const options = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true };
+                const formattedDate = createdAt.toLocaleString('pt-BR', options).replace(',', '');
+
+                // Limitar o nome da tarefa a 20 caracteres
+                const taskName = input.value.trim().substring(0, 20);
+
+                task.innerHTML = `
+                    <div class="task-header">
+                        <span class="task-priority"></span>
+                        <span class="task-name">${taskName}</span>
+                        <button class="expand-btn" onclick="toggleTaskDetails(this)">▼</button>
+                    </div>
+                    <div class="task-details" style="display: none;">
+                        <p class="task-date">${formattedDate}</p>
+                        <div class="priority-selector">
+                            <button onclick="setPriority(this, 1)" class="priority-btn"><i class="bi bi-1-square"></i></button>
+                            <button onclick="setPriority(this, 2)" class="priority-btn"><i class="bi bi-2-square"></i></button>
+                            <button onclick="setPriority(this, 3)" class="priority-btn"><i class="bi bi-3-square"></i></button>
+                            <button onclick="setPriority(this, 4)" class="priority-btn"><i class="bi bi-4-square"></i></button>
+                            <button onclick="setPriority(this, 5)" class="priority-btn"><i class="bi bi-5-square"></i></button>
+                        </div>
+                        <textarea class="task-textarea" placeholder="Detalhe a tarefa aqui..."></textarea>
+                    </div>
+                `;
                 task.dataset.timestamp = Date.now();
                 taskList.appendChild(task);
                 inputContainer.remove();
@@ -137,12 +153,23 @@
         button.innerHTML = '';
     }
 
+    function toggleTaskDetails(button) {
+        const taskDetails = button.parentElement.nextElementSibling;
+        taskDetails.style.display = taskDetails.style.display === 'none' ? 'block' : 'none';
+        button.textContent = taskDetails.style.display === 'none' ? '▼' : '▲';
+    }
+
+    function setPriority(button, level) {
+        const taskHeader = button.closest('.task').querySelector('.task-priority');
+        taskHeader.innerHTML = `<i class="bi bi-${level}-square"></i> `;
+    }
+
     function toggleMenu(icon) {
         const menu = icon.nextElementSibling;
         if (menu.style.display === 'block') {
             menu.style.display = 'none';
         } else {
-            document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none'); // Fecha menus abertos
+            document.querySelectorAll('.menu-options').forEach(m => m.style.display = 'none');
             menu.style.display = 'block';
         }
     }
@@ -204,9 +231,8 @@
     }
 
     .column {
-        background-color: #ffffff29 !important;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 0px;
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
         width: 300px;
         flex-shrink: 0;
         display: flex;
@@ -230,29 +256,33 @@
         text-align: center;
         position: relative;
     }
+
     .input-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    box-sizing: border-box;
-}
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
     .task-input-container {
         display: flex;
         align-items: center;
         gap: 5px;
-        width: 100%; /* Ajusta a largura para caber dentro da coluna */
-        box-sizing: border-box; /* Inclui padding e border dentro da largura */
+        width: 100%;
+        box-sizing: border-box;
     }
+
     .column-name-input {
-    flex: 1; /* Garante que o input ocupe o espaço disponível */
-    padding: 8px; /* Reduz o padding para encaixar melhor */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-    font-size: 0.9em; /* Reduz o tamanho do texto */
-    height: 35px;
-}
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+        font-size: 0.9em;
+        height: 35px;
+    }
+
     .task-input {
         flex: 1;
         padding: 10px;
@@ -264,7 +294,7 @@
         height: 40px;
     }
 
- .confirm-task-btn {
+    .confirm-task-btn {
         background-color: #39ff14;
         border: none;
         border-radius: 5px;
@@ -277,19 +307,20 @@
         align-items: center;
         justify-content: center;
     }
+
     .confirm-column-btn {
-    flex-shrink: 0; /* Evita que o botão encolha */
-    width: 35px; /* Ajusta a largura do botão */
-    height: 35px; /* Ajusta a altura do botão */
-    padding: 0; /* Remove padding extra */
-    background-color: #39ff14;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        flex-shrink: 0;
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        background-color: #39ff14;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
     .confirm-column-btn i, .confirm-task-btn i {
         font-size: 1em;
@@ -311,6 +342,9 @@
         padding: 5px;
         min-width: 150px;
         position: absolute;
+        left: 100%;
+        top: 0;
+        margin-left: 10px;
     }
 
     .color-options {
@@ -360,6 +394,65 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .expand-btn {
+        background: none;
+        border: none;
+        font-size: 1em;
+        cursor: pointer;
+        color: #fff;
+    }
+
+    .task-details {
+        padding-top: 10px;
+        font-size: 0.9em;
+        color: #ccc;
+    }
+
+    .task-date {
+        font-size: 0.9em;
+        color: #ccc;
+        margin-bottom: 5px;
+    }
+
+    .priority-selector {
+        display: flex;
+        justify-content: space-between; /* Distribui igualmente os botões */
+        margin-top: 5px;
+    }
+
+    .priority-btn {
+        background: none;
+        border: none;
+        font-size: 1.2em;
+        color: #fff;
+        cursor: pointer;
+        margin-right: 5px;
+    }
+
+    .priority-btn:hover {
+        color: #39ff14;
+    }
+
+    .task-textarea {
+        width: 100%;
+        min-height: 100px;
+        background-color: #333;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 5px;
+        padding: 10px;
+        resize: none;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 16px;
+        margin-top: 15px;
+    }
+
     .add-task-btn {
         background: none;
         border: none;
@@ -367,7 +460,7 @@
         padding: 5px;
         font-size: 1.5em;
         color: #333;
-        display: none; /* Oculta por padrão */
+        display: none;
     }
 
     .add-task-btn:hover {
@@ -393,6 +486,7 @@
     }
 </style>
 
-<!-- Adicione o link para os ícones do Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.1/font/bootstrap-icons.min.css">
+
 {% endblock %}
