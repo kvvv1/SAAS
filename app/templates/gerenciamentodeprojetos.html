@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1 class="text-center text-neon mt-5">Gerenciamento de Projetos</h1>
-<div class="board-wrapper">
+<div class="board-wrapper" onclick="handleClickOutside(event)">
     <div class="create-column-container">
         <button class="create-column-btn" onclick="createTemporaryColumn()"><i class="fas fa-plus"></i></button>
     </div>
@@ -15,6 +15,9 @@
 
 <script>
     let isCreatingColumn = false;
+    let currentColumn = null;
+    let isCreatingTask = false;
+    let currentTaskInputContainer = null;
 
     function createTemporaryColumn() {
         if (isCreatingColumn) return;
@@ -31,7 +34,7 @@
                 </div>
             </div>
             <div class="task-list"></div>
-            <button class="add-task-btn" onclick="showTaskInput(this)" style="display: none;"><i class="fas fa-plus"></i></button>
+            <button class="add-task-btn" onclick="showTaskInput(this)"><i class="fas fa-plus"></i></button>
         `;
 
         boardContainer.appendChild(newColumn);
@@ -39,7 +42,9 @@
         requestAnimationFrame(() => {
             newColumn.classList.add('slide-in');
         });
+
         isCreatingColumn = true;
+        currentColumn = newColumn;
     }
 
     function confirmColumn(button) {
@@ -68,12 +73,14 @@
                             <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
                             <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
                             <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
+                            <button onclick="setCustomOrder(this)" class="sort-option">Personalizado</button>
                         </div>
                     </div>
                 </div>
             `;
             columnHeader.closest('.column').querySelector('.add-task-btn').style.display = 'block';
             isCreatingColumn = false;
+            currentColumn = null;
         }
     }
 
@@ -86,9 +93,7 @@
     function showTaskInput(button) {
         const taskList = button.previousElementSibling;
 
-        if (taskList.querySelector('.task-input')) {
-            return;
-        }
+        if (isCreatingTask || taskList.querySelector('.task-input-container')) return;
 
         const inputContainer = document.createElement('div');
         inputContainer.classList.add('task-input-container');
@@ -104,39 +109,11 @@
 
         confirmButton.onclick = function () {
             if (input.value.trim() !== '') {
-                const task = document.createElement('div');
-                task.classList.add('task');
-
-                // Formatação da data e hora simplificada
-                const createdAt = new Date();
-                const options = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true };
-                const formattedDate = createdAt.toLocaleString('pt-BR', options).replace(',', '');
-
-                // Limitar o nome da tarefa a 20 caracteres
-                const taskName = input.value.trim().substring(0, 20);
-
-                task.innerHTML = `
-                    <div class="task-header">
-                        <span class="task-priority"></span>
-                        <span class="task-name">${taskName}</span>
-                        <button class="expand-btn" onclick="toggleTaskDetails(this)">▼</button>
-                    </div>
-                    <div class="task-details" style="display: none;">
-                        <p class="task-date">${formattedDate}</p>
-                        <div class="priority-selector">
-                            <button onclick="setPriority(this, 1)" class="priority-btn"><i class="bi bi-1-square"></i></button>
-                            <button onclick="setPriority(this, 2)" class="priority-btn"><i class="bi bi-2-square"></i></button>
-                            <button onclick="setPriority(this, 3)" class="priority-btn"><i class="bi bi-3-square"></i></button>
-                            <button onclick="setPriority(this, 4)" class="priority-btn"><i class="bi bi-4-square"></i></button>
-                            <button onclick="setPriority(this, 5)" class="priority-btn"><i class="bi bi-5-square"></i></button>
-                        </div>
-                        <textarea class="task-textarea" placeholder="Detalhe a tarefa aqui..."></textarea>
-                    </div>
-                `;
-                task.dataset.timestamp = Date.now();
-                taskList.appendChild(task);
+                createTask(input.value.trim(), taskList);
                 inputContainer.remove();
                 button.innerHTML = '<i class="fas fa-plus"></i>';
+                isCreatingTask = false;
+                currentTaskInputContainer = null;
             }
         };
 
@@ -151,6 +128,77 @@
         taskList.appendChild(inputContainer);
         input.focus();
         button.innerHTML = '';
+        isCreatingTask = true;
+        currentTaskInputContainer = inputContainer;
+    }
+
+    function createTask(taskName, taskList) {
+        const task = document.createElement('div');
+        task.classList.add('task');
+        task.draggable = true;
+
+        const createdAt = new Date();
+        const options = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true };
+        const formattedDate = createdAt.toLocaleString('pt-BR', options).replace(',', '');
+
+        task.innerHTML = `
+            <div class="task-header">
+                <span class="task-priority"></span>
+                <span class="task-name">${taskName}</span>
+                <button class="expand-btn" onclick="toggleTaskDetails(this)">▼</button>
+            </div>
+            <div class="task-details" style="display: none;">
+                <p class="task-date">${formattedDate}</p>
+                <div class="priority-selector">
+                    <button onclick="setPriority(this, 1)" class="priority-btn"><i class="bi bi-1-square"></i></button>
+                    <button onclick="setPriority(this, 2)" class="priority-btn"><i class="bi bi-2-square"></i></button>
+                    <button onclick="setPriority(this, 3)" class="priority-btn"><i class="bi bi-3-square"></i></button>
+                    <button onclick="setPriority(this, 4)" class="priority-btn"><i class="bi bi-4-square"></i></button>
+                    <button onclick="setPriority(this, 5)" class="priority-btn"><i class="bi bi-5-square"></i></button>
+                </div>
+                <textarea class="task-textarea" placeholder="Detalhe a tarefa aqui..."></textarea>
+            </div>
+        `;
+        task.dataset.timestamp = Date.now();
+        taskList.appendChild(task);
+
+        // Eventos para arrastar e soltar
+        task.addEventListener('dragstart', dragStart);
+        task.addEventListener('dragover', dragOver);
+        task.addEventListener('drop', dropTask);
+        task.addEventListener('dragend', () => setCustomOrderButtonActive(taskList));
+    }
+
+    function dragStart(event) {
+        event.dataTransfer.setData('text/plain', event.target.dataset.timestamp);
+        event.currentTarget.style.opacity = '0.4';
+    }
+
+    function dragOver(event) {
+        event.preventDefault();
+    }
+
+    function dropTask(event) {
+        event.preventDefault();
+        const taskList = event.currentTarget.closest('.task-list');
+        const draggedTimestamp = event.dataTransfer.getData('text/plain');
+        const draggedTask = Array.from(taskList.children).find(task => task.dataset.timestamp === draggedTimestamp);
+
+        if (event.currentTarget !== draggedTask) {
+            taskList.insertBefore(draggedTask, event.currentTarget);
+        }
+    }
+
+    function setCustomOrder(button) {
+        button.parentElement.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
+        button.classList.add('active');
+    }
+
+    function setCustomOrderButtonActive(taskList) {
+        const columnMenu = taskList.closest('.column').querySelector('.submenu-options');
+        columnMenu.querySelectorAll('.sort-option').forEach(option => option.classList.remove('active'));
+        const customOption = columnMenu.querySelector('button[onclick="setCustomOrder(this)"]');
+        if (customOption) customOption.classList.add('active');
     }
 
     function toggleTaskDetails(button) {
@@ -190,7 +238,7 @@
     function sortTasks(button, order) {
         const column = button.closest('.column');
         const taskList = column.querySelector('.task-list');
-        const tasks = Array.from(taskList.children).filter(child => !child.classList.contains('task-input'));
+        const tasks = Array.from(taskList.children).filter(child => !child.classList.contains('task-input-container'));
 
         if (order === 'recent') {
             tasks.sort((a, b) => b.dataset.timestamp - a.dataset.timestamp);
@@ -205,9 +253,30 @@
         button.parentElement.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
         button.classList.add('active');
     }
+
+    function handleClickOutside(event) {
+        if (isCreatingColumn && currentColumn && !currentColumn.contains(event.target) && !event.target.closest('.create-column-btn')) {
+            currentColumn.remove();
+            isCreatingColumn = false;
+            currentColumn = null;
+        }
+
+        if (isCreatingTask && currentTaskInputContainer && !currentTaskInputContainer.contains(event.target) && !event.target.closest('.add-task-btn')) {
+            currentTaskInputContainer.remove();
+            isCreatingTask = false;
+            currentTaskInputContainer = null;
+            const addTaskButton = document.querySelector('.add-task-btn');
+            if (addTaskButton) addTaskButton.innerHTML = '<i class="fas fa-plus"></i>';
+        }
+    }
+
+    document.addEventListener('click', handleClickOutside);
 </script>
 
 <style>
+        .sort-option.active {
+        text-decoration: underline;
+    }
     .board-wrapper {
         display: flex;
         align-items: flex-start;
