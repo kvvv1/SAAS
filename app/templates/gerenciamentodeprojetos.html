@@ -18,6 +18,8 @@
     let currentColumn = null;
     let isCreatingTask = false;
     let currentTaskInputContainer = null;
+    let currentTaskColumn = null;
+
 
     function createTemporaryColumn() {
         if (isCreatingColumn) return;
@@ -67,15 +69,15 @@
                         <button class="color-btn" style="background-color: #FFC300;" onclick="setColor(this)"></button>
                     </div>
                     <button onclick="renameColumn(this)"><i class="fas fa-paint-brush"></i> Renomear</button>
-                    <div class="submenu">
-                        <button class="submenu-btn">Ordenar por</button>
-                        <div class="submenu-options">
-                            <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
-                            <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
-                            <button onclick="sortTasks(this, 'alphabetical')" class="sort-option">Alfabeticamente</button>
-                            <button onclick="setCustomOrder(this)" class="sort-option">Personalizado</button>
-                        </div>
-                    </div>
+                   <div class="submenu">
+    <button class="submenu-btn" onclick="toggleSortOptions(this)">Ordenar por</button>
+    <div class="submenu-options" style="display: none;">
+        <button onclick="sortTasks(this, 'recent')" class="sort-option active">Mais Recentes</button>
+        <button onclick="sortTasks(this, 'old')" class="sort-option">Mais Antigos</button>
+        <button onclick="setCustomOrder(this)" class="sort-option">Personalizado</button>
+    </div>
+</div>
+
                 </div>
             `;
             columnHeader.closest('.column').querySelector('.add-task-btn').style.display = 'block';
@@ -91,46 +93,53 @@
     }
 
     function showTaskInput(button) {
-        const taskList = button.previousElementSibling;
+    const taskList = button.previousElementSibling;
 
-        if (isCreatingTask || taskList.querySelector('.task-input-container')) return;
+    if (isCreatingTask || taskList.querySelector('.task-input-container')) return;
 
-        const inputContainer = document.createElement('div');
-        inputContainer.classList.add('task-input-container');
+    const inputContainer = document.createElement('div');
+    inputContainer.classList.add('task-input-container');
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = 'Digite o nome da tarefa';
-        input.classList.add('task-input');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Digite o nome da tarefa';
+    input.classList.add('task-input');
 
-        const confirmButton = document.createElement('button');
-        confirmButton.classList.add('confirm-task-btn');
-        confirmButton.innerHTML = '<i class="fas fa-check"></i>';
+    const confirmButton = document.createElement('button');
+    confirmButton.classList.add('confirm-task-btn');
+    confirmButton.innerHTML = '<i class="fas fa-check"></i>';
 
-        confirmButton.onclick = function () {
-            if (input.value.trim() !== '') {
-                createTask(input.value.trim(), taskList);
-                inputContainer.remove();
-                button.innerHTML = '<i class="fas fa-plus"></i>';
-                isCreatingTask = false;
-                currentTaskInputContainer = null;
-            }
-        };
+    confirmButton.onclick = function () {
+        if (input.value.trim() !== '') {
+            createTask(input.value.trim(), taskList);
+            inputContainer.remove();
+            button.innerHTML = '<i class="fas fa-plus"></i>';
+            isCreatingTask = false;
+            currentTaskInputContainer = null;
+            currentTaskColumn = null;  // Limpa a coluna atual após a criação
+        }
+    };
 
-        input.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && input.value.trim() !== '') {
-                confirmButton.click();
-            }
-        });
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && input.value.trim() !== '') {
+            confirmButton.click();
+        }
+    });
 
-        inputContainer.appendChild(input);
-        inputContainer.appendChild(confirmButton);
-        taskList.appendChild(inputContainer);
-        input.focus();
-        button.innerHTML = '';
-        isCreatingTask = true;
-        currentTaskInputContainer = inputContainer;
-    }
+    inputContainer.appendChild(input);
+    inputContainer.appendChild(confirmButton);
+    taskList.appendChild(inputContainer);
+    input.focus();
+    button.innerHTML = '';
+    isCreatingTask = true;
+    currentTaskInputContainer = inputContainer;
+    currentTaskColumn = button.closest('.column');  // Armazena a coluna onde a tarefa está sendo criada
+}
+
+    function toggleSortOptions(button) {
+    const submenuOptions = button.nextElementSibling;
+    submenuOptions.style.display = submenuOptions.style.display === 'none' ? 'block' : 'none';
+}
 
     function createTask(taskName, taskList) {
         const task = document.createElement('div');
@@ -166,7 +175,7 @@
         task.addEventListener('dragstart', dragStart);
         task.addEventListener('dragover', dragOver);
         task.addEventListener('drop', dropTask);
-        task.addEventListener('dragend', () => setCustomOrderButtonActive(taskList));
+        task.addEventListener('dragend', dragEnd);
     }
 
     function dragStart(event) {
@@ -177,6 +186,10 @@
     function dragOver(event) {
         event.preventDefault();
     }
+    function dragEnd(event) {
+    event.currentTarget.style.opacity = '1'; // Restaura a opacidade ao soltar
+    setCustomOrderButtonActive(event.currentTarget.closest('.task-list'));
+}
 
     function dropTask(event) {
         event.preventDefault();
@@ -188,6 +201,7 @@
             taskList.insertBefore(draggedTask, event.currentTarget);
         }
     }
+    
 
     function setCustomOrder(button) {
         button.parentElement.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
@@ -255,20 +269,28 @@
     }
 
     function handleClickOutside(event) {
-        if (isCreatingColumn && currentColumn && !currentColumn.contains(event.target) && !event.target.closest('.create-column-btn')) {
-            currentColumn.remove();
-            isCreatingColumn = false;
-            currentColumn = null;
-        }
+    if (isCreatingColumn && currentColumn && !currentColumn.contains(event.target) && !event.target.closest('.create-column-btn')) {
+        currentColumn.remove();
+        isCreatingColumn = false;
+        currentColumn = null;
+    }
 
-        if (isCreatingTask && currentTaskInputContainer && !currentTaskInputContainer.contains(event.target) && !event.target.closest('.add-task-btn')) {
-            currentTaskInputContainer.remove();
-            isCreatingTask = false;
-            currentTaskInputContainer = null;
-            const addTaskButton = document.querySelector('.add-task-btn');
-            if (addTaskButton) addTaskButton.innerHTML = '<i class="fas fa-plus"></i>';
+    if (isCreatingTask && currentTaskInputContainer && !currentTaskInputContainer.contains(event.target) && !event.target.closest('.add-task-btn')) {
+        currentTaskInputContainer.remove();
+        isCreatingTask = false;
+        currentTaskInputContainer = null;
+
+        // Usa a coluna atual armazenada para restaurar o botão "+"
+        if (currentTaskColumn) {
+            const addTaskButton = currentTaskColumn.querySelector('.add-task-btn');
+            if (addTaskButton) {
+                addTaskButton.style.display = 'block';
+                addTaskButton.innerHTML = '<i class="fas fa-plus"></i>';
+            }
+            currentTaskColumn = null;  // Limpa a coluna atual após o cancelamento
         }
     }
+}
 
     document.addEventListener('click', handleClickOutside);
 </script>

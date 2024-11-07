@@ -9,6 +9,9 @@
         body {
             background-color: #000;
             color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .neon-line {
@@ -40,6 +43,18 @@
             padding: 15px;
             margin-bottom: 20px;
         }
+
+        /* Sticky footer */
+        .content {
+            flex: 1;
+        }
+
+        .footer {
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            
+        }
     </style>
 </head>
 <body>
@@ -55,12 +70,12 @@
     <div class="neon-line"></div>
 
     <!-- Main Content -->
-    <div class="container">
+    <div class="container content">
         {% block content %}{% endblock %}
     </div>
 
     <!-- Footer -->
-    <footer class="footer bg-dark mt-5 text-center text-neon">
+    <footer class="footer bg-dark text-center text-neon">
         <p>© 2024 Nome da Empresa. Todos os direitos reservados.</p>
     </footer>
 
